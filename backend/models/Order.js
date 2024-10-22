@@ -5,6 +5,20 @@ class Order extends Model {}
 
 Order.init(
   {
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "user_id",
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
+    productId: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      field: "product_id",
+    },
     totalAmount: {
       type: DataTypes.FLOAT,
       allowNull: false,

@@ -5,6 +5,24 @@ class CartItem extends Model {}
 
 CartItem.init(
   {
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "user_id",
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
+    productId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "product_id",
+      references: {
+        model: "products",
+        key: "id",
+      },
+    },
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,

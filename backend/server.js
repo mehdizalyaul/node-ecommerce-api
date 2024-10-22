@@ -5,29 +5,37 @@ const Product = require("./models/Product.js");
 const OrderItem = require("./models/OrderItem.js");
 const CartItem = require("./models/CartItem.js");
 
-// User
-User.hasMany(Order, { foreignKey: "userId", onDelete: "CASCADE" });
-User.hasMany(CartItem, { foreignKey: "userId", onDelete: "CASCADE" });
+// User has many Orders
+User.hasMany(Order, { foreignKey: "userId" });
+Order.belongsTo(User, { foreignKey: "userId" });
 
-// Product
-Product.belongsToMany(Order, {
-  through: OrderItem,
+// User has many CartItems
+User.hasMany(CartItem, { foreignKey: "userId" });
+CartItem.belongsTo(User, { foreignKey: "userId" });
+
+// Order has many OrderItems
+Order.hasMany(OrderItem, { foreignKey: "orderId" });
+OrderItem.belongsTo(Order, { foreignKey: "orderId" });
+
+// Product has many OrderItems
+Product.hasMany(OrderItem, { foreignKey: "productId" });
+OrderItem.belongsTo(Product, { foreignKey: "productId" });
+
+// Product has many CartItems
+Product.hasMany(CartItem, { foreignKey: "productId" });
+CartItem.belongsTo(Product, { foreignKey: "productId" });
+
+// Optional: User belongs to many Products through CartItems
+User.belongsToMany(Product, {
+  through: CartItem,
+  foreignKey: "userId",
+  otherKey: "productId",
+});
+Product.belongsToMany(User, {
+  through: CartItem,
   foreignKey: "productId",
-  onDelete: "CASCADE",
+  otherKey: "userId",
 });
-Product.hasMany(CartItem, { foreignKey: "productId", onDelete: "CASCADE" });
-
-// CartItem
-CartItem.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
-CartItem.belongsTo(Product, { foreignKey: "productId", onDelete: "CASCADE" });
-
-// Order
-Order.belongsToMany(Product, {
-  through: OrderItem,
-  foreignKey: "orderId",
-  onDelete: "CASCADE",
-});
-Order.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
 
 sequelize
   .sync({ force: true })
