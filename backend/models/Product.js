@@ -5,6 +5,11 @@ class Product extends Model {}
 
 Product.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -14,7 +19,7 @@ Product.init(
       allowNull: false,
     },
     price: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.FLOAT.UNSIGNED,
       allowNull: false,
     },
     stock: {
