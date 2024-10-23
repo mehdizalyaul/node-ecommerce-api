@@ -38,7 +38,7 @@ router.post("/products", upload.array("images", 7), async (req, res) => {
       images,
     });
 
-    res.status(200).json({ code: 200, data: { product } });
+    res.status(200).json({ code: 201, data: { product } });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }

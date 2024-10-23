@@ -1,7 +1,8 @@
 const sequelize = require("./config/database.js");
 const { User, Product, Order, OrderItem, CartItem } = require("./models");
 const express = require("express");
-const productRoutes = require("./routes/products.js");
+const productRoutes = require("./routes/product.js");
+const userRoutes = require("./routes/user.js");
 
 const app = express();
 const port = 3000;
@@ -12,6 +13,8 @@ app.use(express.json());
 // Parse URL-encoded data from forms
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/api", userRoutes);
+
 app.use("/api", productRoutes);
 
 app.get("/", (req, res) => {
@@ -19,7 +22,7 @@ app.get("/", (req, res) => {
 });
 
 sequelize
-  .sync({ force: true })
+  .sync({ alter: true })
   .then(() => {
     console.log("Database synced successfully");
   })
