@@ -16,6 +16,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Create new product
 router.post("/products", upload.array("images", 7), async (req, res) => {
   try {
     const { name, description, price, stock, category } = req.body;
@@ -38,6 +39,73 @@ router.post("/products", upload.array("images", 7), async (req, res) => {
     });
 
     res.status(200).json({ code: 200, data: { product } });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+// Get all products
+router.get("/products", async (req, res) => {
+  try {
+    const products = await Product.findAll();
+    res.status(200).json({ code: 200, data: { products } });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+// Get a single product by ID
+router.get("/products/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const product = await Product.findOne({ where: { id: id } }); // Using findOne since id should be unique
+
+    if (!product) {
+      return res.status(404).json({ code: 404, message: "Product not found" });
+    }
+
+    res.status(200).json({ code: 200, data: { product } });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+// Delete a product by ID
+router.delete("/products/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rowsDeleted = await Product.destroy({ where: { id: id } });
+
+    if (!rowsDeleted) {
+      return res.status(404).json({ code: 404, message: "Product not found" });
+    }
+
+    res
+      .status(200)
+      .json({ code: 200, message: "Product deleted successfully" });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+// Update a product by ID
+router.put("/products/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [rowsUpdated] = await Product.update(
+      { ...req.body },
+      { where: { id: id } }
+    );
+
+    if (!rowsUpdated) {
+      return res
+        .status(404)
+        .json({ code: 404, message: "Product not found or no changes made" });
+    }
+
+    const updatedProduct = await Product.findOne({ where: { id: id } });
+
+    res.status(200).json({ code: 200, data: { product: updatedProduct } });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
