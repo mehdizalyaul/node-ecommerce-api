@@ -1,8 +1,9 @@
-const User = require('./User');
-const Product = require('./Product');
-const Order = require('./Order');
-const OrderItem = require('./OrderItem');
-const CartItem = require('./CartItem');
+const User = require("./User");
+const Product = require("./Product");
+const Order = require("./Order");
+const OrderItem = require("./OrderItem");
+const CartItem = require("./CartItem");
+const RefreshToken = require("./RefreshToken");
 
 User.hasMany(Order, { foreignKey: "userId" });
 Order.belongsTo(User, { foreignKey: "userId" });
@@ -20,21 +21,24 @@ Product.hasMany(CartItem, { foreignKey: "productId" });
 CartItem.belongsTo(Product, { foreignKey: "productId" });
 
 User.belongsToMany(Product, {
-    through: CartItem,
-    foreignKey: "userId",
-    otherKey: "productId",
+  through: CartItem,
+  foreignKey: "userId",
+  otherKey: "productId",
 });
 
 Product.belongsToMany(User, {
-    through: CartItem,
-    foreignKey: "productId",
-    otherKey: "userId",
+  through: CartItem,
+  foreignKey: "productId",
+  otherKey: "userId",
 });
 
+User.hasMany(RefreshToken, { foreignKey: "userId" });
+RefreshToken.belongsTo(User, { foreignKey: "userId" });
+
 module.exports = {
-    User,
-    Product,
-    Order,
-    OrderItem,
-    CartItem
-}
+  User,
+  Product,
+  Order,
+  OrderItem,
+  CartItem,
+};

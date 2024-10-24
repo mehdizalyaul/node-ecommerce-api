@@ -1,13 +1,44 @@
 const express = require("express");
 const router = express.Router();
+const bcrypt = require("bcrypt");
 const User = require("../models/User.js");
+const jwt = require("jsonwebtoken");
+const RefreshToken = require("../models/RefreshToken.js");
+
+const accessSecretKey = `${process.env.ACCESS_SECRET_KEY}`;
+const refreshSecretKey = `${process.env.REFRESH_SECRET_KEY}`;
+
+async function generateTokens(userId) {
+  const accessExpiresIn = `${process.env.ACCESS_EXPIRES_IN}`; // minutes
+  const refreshExpiresIn = `${process.env.REFRESH_EXPIRES_IN}`; // days
+  // Generate access token
+  const accessToken = await jwt.sign({ userId }, accessSecretKey, {
+    subject: "accessApi",
+    expiresIn: `${accessExpiresIn}m`, // access token expires in 5 minutes
+  });
+
+  // Generate refresh token
+  const refreshToken = await jwt.sign({ userId }, refreshSecretKey, {
+    subject: "refreshToken",
+    expiresIn: `${refreshExpiresIn}d`, // refresh token expires in 7 days
+  });
+
+  // Calculate access token expiry date
+  let expiryDate = new Date();
+  expiryDate.setMinutes(expiryDate.getMinutes() + accessExpiresIn);
+  expiryDate = expiryDate.toISOString();
+
+  // Store the new refresh token in the database
+  await RefreshToken.create({ userId, expiryDate, token: refreshToken });
+  return { accessToken, refreshToken, expiryDate };
+}
 
 // create a user
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
-    const user = await User.create({ name, email, password });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, password: hashedPassword });
 
     res.status(200).json({ code: 201, data: user });
   } catch (error) {
@@ -82,4 +113,82 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({
+      where: { email: email },
+    });
+
+    if (!user) {
+      res.status(404).json({ code: 404, message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const { accessToken, refreshToken, expiryDate } = await generateTokens(
+      user.id
+    );
+
+    res
+      .status(200)
+      .json({ code: 200, data: { accessToken, refreshToken, expiryDate } });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+router.post("/refresh-token", async (req, res) => {
+  const { refreshToken } = req.body;
+  try {
+    const decoded = jwt.verify(refreshToken, refreshSecretKey);
+    console.log(refreshToken);
+    const isTokenValid = await RefreshToken.findOne({
+      where: {
+        token: refreshToken,
+        userId: decoded.userId,
+      },
+    });
+    console.log(isTokenValid);
+
+    if (!isTokenValid) {
+      return res
+        .status(400)
+        .json({ error: "Invalid or expired refresh token" });
+    }
+
+    await RefreshToken.destroy({ where: { userId: decoded.userId } });
+
+    // Generate new tokens
+    const {
+      accessToken,
+      refreshToken: newRefreshToken,
+      expiryDate,
+    } = await generateTokens(decoded.userId);
+
+    res.status(200).json({
+      code: 200,
+      data: { accessToken, refreshToken: newRefreshToken, expiryDate },
+    });
+  } catch (error) {
+    res
+      .status(401)
+      .json({ code: 401, message: "Invalid or expired refresh token" });
+    console.error("Token is invalid or expired:", error.message);
+  }
+});
+
+/*
+async function isAuthenticated(req, res, next) {
+  try {
+    const 
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+}
+*/
 module.exports = router;
