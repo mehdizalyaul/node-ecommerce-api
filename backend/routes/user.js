@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/User.js");
 const jwt = require("jsonwebtoken");
 const RefreshToken = require("../models/RefreshToken.js");
+const isAuthenticated = require("../middlewares/authMiddleware.js");
 
 const accessSecretKey = `${process.env.ACCESS_SECRET_KEY}`;
 const refreshSecretKey = `${process.env.REFRESH_SECRET_KEY}`;
@@ -146,14 +147,12 @@ router.post("/refresh-token", async (req, res) => {
   const { refreshToken } = req.body;
   try {
     const decoded = jwt.verify(refreshToken, refreshSecretKey);
-    console.log(refreshToken);
     const isTokenValid = await RefreshToken.findOne({
       where: {
         token: refreshToken,
         userId: decoded.userId,
       },
     });
-    console.log(isTokenValid);
 
     if (!isTokenValid) {
       return res
@@ -161,7 +160,9 @@ router.post("/refresh-token", async (req, res) => {
         .json({ error: "Invalid or expired refresh token" });
     }
 
-    await RefreshToken.destroy({ where: { userId: decoded.userId } });
+    await RefreshToken.destroy({
+      where: { token: refreshToken, userId: decoded.userId },
+    });
 
     // Generate new tokens
     const {
@@ -182,13 +183,8 @@ router.post("/refresh-token", async (req, res) => {
   }
 });
 
-/*
-async function isAuthenticated(req, res, next) {
-  try {
-    const 
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-}
-*/
+router.get("/protected", isAuthenticated, async (req, res) => {
+  res.status(201).send(`This the user ${req.userId}`);
+});
+
 module.exports = router;
