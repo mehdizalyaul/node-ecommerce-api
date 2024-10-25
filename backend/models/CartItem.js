@@ -28,6 +28,10 @@ CartItem.init(
         key: "id",
       },
     },
+    price: {
+      type: DataTypes.FLOAT.UNSIGNED,
+      allowNull: false,
+    },
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,

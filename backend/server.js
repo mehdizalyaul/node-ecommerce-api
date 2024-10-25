@@ -3,6 +3,8 @@ const { User, Product, Order, OrderItem, CartItem } = require("./models");
 const express = require("express");
 const productRoutes = require("./routes/product.js");
 const userRoutes = require("./routes/user.js");
+const cartItemRoutes = require("./routes/cart.js");
+const orderRoutes = require("./routes/order.js");
 require("dotenv").config();
 
 const app = express();
@@ -17,6 +19,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", userRoutes);
 
 app.use("/api", productRoutes);
+
+app.use("/api", cartItemRoutes);
+
+app.use("/api", orderRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello world");

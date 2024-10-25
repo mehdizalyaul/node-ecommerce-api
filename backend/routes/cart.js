@@ -3,6 +3,7 @@ const router = express.Router();
 const CartItem = require("../models/CartItem.js");
 const isAuthenticated = require("../middlewares/authMiddleware.js");
 const Op = require("sequelize");
+const Product = require("../models/Product.js");
 
 //Add item to cart
 router.post("/cart", isAuthenticated, async (req, res) => {
@@ -10,10 +11,12 @@ router.post("/cart", isAuthenticated, async (req, res) => {
     const userId = req.userId;
     const { productId, quantity, description } = req.body;
 
+    const product = await Product.findOne({ where: { id: productId } });
+
     if (!productId) {
       return res
         .status(400)
-        .json({ code: 400, error: { message: "Product ID is required." } });
+        .json({ code: 400, error: { message: "Product is required." } });
     }
     if (quantity <= 0) {
       return res.status(400).json({
@@ -27,6 +30,7 @@ router.post("/cart", isAuthenticated, async (req, res) => {
       productId,
       quantity,
       description,
+      price: product.price * quantity,
     });
 
     res.status(201).json({ code: 201, data: { cartItem } });

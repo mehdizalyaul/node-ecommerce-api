@@ -19,10 +19,15 @@ Order.init(
         key: "id",
       },
     },
-    productId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+    address: {
+      type: DataTypes.STRING,
       allowNull: false,
       field: "product_id",
+    },
+    paymentMethod: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "payment_method",
     },
     totalAmount: {
       type: DataTypes.FLOAT,
