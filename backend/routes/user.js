@@ -12,6 +12,7 @@ const refreshSecretKey = `${process.env.REFRESH_SECRET_KEY}`;
 async function generateTokens(userId) {
   const accessExpiresIn = `${process.env.ACCESS_EXPIRES_IN}`; // minutes
   const refreshExpiresIn = `${process.env.REFRESH_EXPIRES_IN}`; // days
+
   // Generate access token
   const accessToken = await jwt.sign({ userId }, accessSecretKey, {
     subject: "accessApi",
@@ -38,10 +39,13 @@ async function generateTokens(userId) {
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      res.status(400).json({ code: 400, error: "Validation Error" });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
 
-    res.status(200).json({ code: 201, data: user });
+    res.status(201).json({ code: 201, data: user });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -114,9 +118,15 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
+// User Login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      res.status(400).json({ code: 400, error: "Validation Error" });
+    }
+
     const user = await User.findOne({
       where: { email: email },
     });
@@ -143,6 +153,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Refresh Token
 router.post("/refresh-token", async (req, res) => {
   const { refreshToken } = req.body;
   try {
@@ -183,8 +194,21 @@ router.post("/refresh-token", async (req, res) => {
   }
 });
 
-router.get("/protected", isAuthenticated, async (req, res) => {
-  res.status(201).send(`This the user ${req.userId}`);
+// Protected
+router.get("/profile", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const user = await User.findOne({ where: { id: userId } });
+
+    if (!user) {
+      return res.status(404).json({ code: 404, message: "User not found." });
+    }
+
+    res.status(200).json({ code: 200, data: user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 module.exports = router;
