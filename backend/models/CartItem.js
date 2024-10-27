@@ -21,7 +21,7 @@ CartItem.init(
     },
     productId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       field: "product_id",
       references: {
         model: "products",
