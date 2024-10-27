@@ -53,8 +53,8 @@ Product.init(
         },
       },
     },
-    category: {
-      type: DataTypes.STRING,
+    categoryId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
         notEmpty: true,
@@ -62,6 +62,11 @@ Product.init(
           msg: "Please enter product category",
         },
       },
+      references: {
+        model: "categories",
+        key: "id",
+      },
+      field: "category_id",
     },
     images: {
       type: DataTypes.JSON,

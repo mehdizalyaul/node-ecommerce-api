@@ -1,5 +1,12 @@
 const sequelize = require("./config/database.js");
-const { User, Product, Order, OrderItem, CartItem } = require("./models");
+const {
+  User,
+  Product,
+  Category,
+  Order,
+  OrderItem,
+  CartItem,
+} = require("./models");
 const express = require("express");
 const productRoutes = require("./routes/product.js");
 const userRoutes = require("./routes/user.js");

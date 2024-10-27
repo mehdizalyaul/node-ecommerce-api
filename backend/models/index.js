@@ -4,6 +4,7 @@ const Order = require("./Order");
 const OrderItem = require("./OrderItem");
 const CartItem = require("./CartItem");
 const RefreshToken = require("./RefreshToken");
+const Category = require("./Category");
 
 User.hasMany(Order, { foreignKey: "userId" });
 Order.belongsTo(User, { foreignKey: "userId" });
@@ -19,6 +20,9 @@ OrderItem.belongsTo(Product, { foreignKey: "productId" });
 
 Product.hasMany(CartItem, { foreignKey: "productId", onDelete: "CASCADE" });
 CartItem.belongsTo(Product, { foreignKey: "productId" });
+
+Category.hasMany(Product, { foreignKey: "categoryId" });
+Product.belongsTo(Category, { foreignKey: "categoryId" });
 
 User.belongsToMany(Product, {
   through: CartItem,

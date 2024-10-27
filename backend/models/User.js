@@ -24,14 +24,9 @@ User.init(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: true, // Define only once
       validate: {
-        len: [3, 100],
-        notEmpty: true,
         isEmail: true,
-        notNull: {
-          msg: "Please enter your email",
-        },
       },
     },
     password: {
@@ -39,7 +34,6 @@ User.init(
       allowNull: false,
       field: "password_hash",
       validate: {
-        len: [3, 100],
         notEmpty: true,
         notNull: {
           msg: "Please enter your password",
