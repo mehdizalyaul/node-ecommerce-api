@@ -13,26 +13,72 @@ Product.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        notNull: {
+          msg: "Please enter the name of product",
+        },
+      },
     },
     description: {
       type: DataTypes.TEXT,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        notNull: {
+          msg: "Please enter product description",
+        },
+      },
     },
     price: {
       type: DataTypes.FLOAT.UNSIGNED,
       allowNull: false,
+      validate: {
+        isFloat: true,
+        min: 0.01,
+        notEmpty: true,
+        notNull: {
+          msg: "Please enter product price",
+        },
+      },
     },
     stock: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        isInt: true,
+        notNull: {
+          msg: "Please enter product stock",
+        },
+      },
     },
     category: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        notNull: {
+          msg: "Please enter product category",
+        },
+      },
     },
     images: {
       type: DataTypes.JSON,
       allowNull: true,
+      get() {
+        const rawImages = this.getDataValue("images");
+        if (!rawImages) return null;
+
+        try {
+          const parsedImages =
+            typeof rawImages === "string" ? JSON.parse(rawImages) : rawImages;
+          return parsedImages.map((img) => `${process.env.IMAGE_URL}${img}`);
+        } catch (error) {
+          console.error("Error parsing images:", error);
+          return rawImages; // Return raw if parsing fails
+        }
+      },
     },
   },
   {

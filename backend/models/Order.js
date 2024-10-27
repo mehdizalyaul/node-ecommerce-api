@@ -23,16 +23,26 @@ Order.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "product_id",
+      validate: {
+        notEmpty: true,
+      },
     },
     paymentMethod: {
       type: DataTypes.STRING,
       allowNull: false,
       field: "payment_method",
+      validate: {
+        notEmpty: true,
+      },
     },
     totalAmount: {
       type: DataTypes.FLOAT,
       allowNull: false,
       field: "total_amount",
+      validate: {
+        isFloat: true,
+        min: 0.01,
+      },
     },
     status: {
       type: DataTypes.ENUM(
@@ -43,6 +53,9 @@ Order.init(
         "Cancelled"
       ),
       defaultValue: "Pending",
+      validate: {
+        isIn: [["Pending", "Processing", "Shipped", "Delivered", "Cancelled"]],
+      },
     },
   },
   {

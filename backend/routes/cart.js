@@ -39,7 +39,7 @@ router.post("/cart", isAuthenticated, async (req, res) => {
   }
 });
 
-// Get cart items
+// Get cart items of a user
 router.get("/cart", isAuthenticated, async (req, res) => {
   try {
     const userId = req.userId;

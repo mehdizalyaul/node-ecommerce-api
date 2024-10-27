@@ -48,7 +48,6 @@ router.post("/products", upload.array("images", 7), async (req, res) => {
 router.get("/products", async (req, res) => {
   try {
     const products = await Product.findAll();
-
     if (!products || products.length === 0) {
       return res.status(404).json({ code: 404, message: "Products not found" });
     }

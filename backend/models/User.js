@@ -13,23 +13,51 @@ User.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        len: [3, 100],
+        notEmpty: true,
+        notNull: {
+          msg: "Please enter your name",
+        },
+      },
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+      validate: {
+        len: [3, 100],
+        notEmpty: true,
+        isEmail: true,
+        notNull: {
+          msg: "Please enter your email",
+        },
+      },
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
       field: "password_hash",
+      validate: {
+        len: [3, 100],
+        notEmpty: true,
+        notNull: {
+          msg: "Please enter your password",
+        },
+      },
     },
     isEmailVerified: {
       type: DataTypes.BOOLEAN,
       field: "is_email_verified",
+      validate: {
+        notEmpty: true,
+      },
     },
     address: {
       type: DataTypes.TEXT,
+      validate: {
+        notEmpty: true,
+      },
     },
   },
   {
