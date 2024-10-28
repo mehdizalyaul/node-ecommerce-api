@@ -5,6 +5,11 @@ const User = require("../models/User.js");
 const jwt = require("jsonwebtoken");
 const RefreshToken = require("../models/RefreshToken.js");
 const isAuthenticated = require("../middlewares/authMiddleware.js");
+const {
+  registerUserSchema,
+  loginUserSchema,
+  updateUserSchema,
+} = require("../validation/userValidation.js");
 
 const accessSecretKey = `${process.env.ACCESS_SECRET_KEY}`;
 const refreshSecretKey = `${process.env.REFRESH_SECRET_KEY}`;
@@ -37,6 +42,10 @@ async function generateTokens(userId) {
 
 // create a user
 router.post("/register", async (req, res) => {
+  const { error } = registerUserSchema.validate(req.body, {
+    allowUnknown: false,
+  });
+  if (error) return res.status(400).json({ message: error.details[0].message });
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
@@ -46,6 +55,45 @@ router.post("/register", async (req, res) => {
     const user = await User.create({ name, email, password: hashedPassword });
 
     res.status(201).json({ code: 201, data: user });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+// User Login
+router.post("/login", async (req, res) => {
+  const { error } = loginUserSchema.validate(req.body, {
+    allowUnknown: false,
+  });
+  if (error) return res.status(400).json({ message: error.details[0].message });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      res.status(400).json({ code: 400, error: "Validation Error" });
+    }
+
+    const user = await User.findOne({
+      where: { email: email },
+    });
+
+    if (!user) {
+      res.status(404).json({ code: 404, message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const { accessToken, refreshToken, expiryDate } = await generateTokens(
+      user.id
+    );
+
+    res
+      .status(200)
+      .json({ code: 200, data: { accessToken, refreshToken, expiryDate } });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -96,6 +144,10 @@ router.delete("/users/:id", async (req, res) => {
 
 // Update a user by ID
 router.put("/users/:id", async (req, res) => {
+  const { error } = updateUserSchema.validate(req.body, {
+    allowUnknown: false,
+  });
+  if (error) return res.status(400).json({ message: error.details[0].message });
   try {
     const id = req.params.id;
 
@@ -113,41 +165,6 @@ router.put("/users/:id", async (req, res) => {
     const updatedUser = await User.findOne({ where: { id: id } });
 
     res.status(200).json({ code: 200, data: updatedUser });
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-});
-
-// User Login
-router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      res.status(400).json({ code: 400, error: "Validation Error" });
-    }
-
-    const user = await User.findOne({
-      where: { email: email },
-    });
-
-    if (!user) {
-      res.status(404).json({ code: 404, message: "Invalid credentials" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const { accessToken, refreshToken, expiryDate } = await generateTokens(
-      user.id
-    );
-
-    res
-      .status(200)
-      .json({ code: 200, data: { accessToken, refreshToken, expiryDate } });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }

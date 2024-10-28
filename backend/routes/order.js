@@ -4,10 +4,17 @@ const CartItem = require("../models/CartItem.js");
 const OrderItem = require("../models/OrderItem.js");
 const Order = require("../models/Order.js");
 const isAuthenticated = require("../middlewares/authMiddleware.js");
-const { Model } = require("sequelize");
+const { createOrderSchema } = require("../validation/orderValidation.js");
 
 // Create an order
 router.post("/orders", isAuthenticated, async (req, res) => {
+  const { error } = createOrderSchema.validate(req.body, {
+    allowUnknown: false,
+  });
+  if (error)
+    return res
+      .status(400)
+      .json({ code: 400, message: error.details[0].message });
   try {
     const userId = req.userId;
     const { address, paymentMethod } = req.body;

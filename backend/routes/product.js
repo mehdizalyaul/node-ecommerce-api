@@ -3,6 +3,10 @@ const router = express.Router();
 const Product = require("../models/Product.js");
 const multer = require("multer");
 const path = require("path");
+const {
+  createProductSchema,
+  updateProductSchema,
+} = require("../validation/productValidation.js");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -18,6 +22,10 @@ const upload = multer({ storage });
 
 // Create new product
 router.post("/products", upload.array("images", 7), async (req, res) => {
+  const { error } = createProductSchema.validate(req.body, {
+    allowUnknown: false,
+  });
+  if (error) return res.status(400).json({ message: error.details[0].message });
   try {
     const { name, description, price, stock, category } = req.body;
 
@@ -94,6 +102,10 @@ router.delete("/products/:id", async (req, res) => {
 
 // Update a product by ID
 router.put("/products/:id", async (req, res) => {
+  const { error } = updateProductSchema.validate(req.body, {
+    allowUnknown: false,
+  });
+  if (error) return res.status(400).json({ message: error.details[0].message });
   try {
     const id = req.params.id;
     const [rowsUpdated] = await Product.update(

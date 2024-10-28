@@ -31,8 +31,13 @@ app.use("/api", cartItemRoutes);
 
 app.use("/api", orderRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Hello world");
+app.all("*", (req, res) => {
+  res
+    .status(404)
+    .json({
+      code: 404,
+      message: `Can't find ${req.originalUrl} on the server!`,
+    });
 });
 
 sequelize

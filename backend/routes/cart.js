@@ -4,9 +4,21 @@ const CartItem = require("../models/CartItem.js");
 const isAuthenticated = require("../middlewares/authMiddleware.js");
 const Op = require("sequelize");
 const Product = require("../models/Product.js");
+const {
+  createCartSchema,
+  updateCartSchema,
+} = require("../validation/cartValidation.js");
 
 //Add item to cart
 router.post("/cart", isAuthenticated, async (req, res) => {
+  const { error } = createCartSchema.validate(req.body, {
+    allowUnknown: false,
+  });
+  if (error)
+    return res
+      .status(400)
+      .json({ code: 400, message: error.details[0].message });
+
   try {
     const userId = req.userId;
     const { productId, quantity, description } = req.body;
@@ -60,6 +72,14 @@ router.get("/cart", isAuthenticated, async (req, res) => {
 
 // Update a cart item
 router.put("/cart/:itemId", isAuthenticated, async (req, res) => {
+  const { error } = updateCartSchema.validate(req.body, {
+    allowUnknown: false,
+  });
+  if (error)
+    return res
+      .status(400)
+      .json({ code: 400, message: error.details[0].message });
+
   try {
     const itemId = req.params.itemId;
     const userId = req.userId;
