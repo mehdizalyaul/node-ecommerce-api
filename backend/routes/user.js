@@ -16,19 +16,23 @@ const CustomError = require("../utils/CustomError");
 const accessSecretKey = `${process.env.ACCESS_SECRET_KEY}`;
 const refreshSecretKey = `${process.env.REFRESH_SECRET_KEY}`;
 
+// TODO: move it to a utility file
 async function generateTokens(userId) {
+  // TODO: Update the environment variables key to include the unit of time
   const accessExpiresIn = `${process.env.ACCESS_EXPIRES_IN}`; // minutes
   const refreshExpiresIn = `${process.env.REFRESH_EXPIRES_IN}`; // days
 
   // Generate access token
   const accessToken = await jwt.sign({ userId }, accessSecretKey, {
     subject: "accessApi",
+    // TODO: remove the "m" after updating the environment variable
     expiresIn: `${accessExpiresIn}m`, // access token expires in 5 minutes
   });
 
   // Generate refresh token
   const refreshToken = await jwt.sign({ userId }, refreshSecretKey, {
     subject: "refreshToken",
+    // TODO: remove the "d" after updating the environment variable
     expiresIn: `${refreshExpiresIn}d`, // refresh token expires in 7 days
   });
 
@@ -57,6 +61,7 @@ router.post(
     const { name, email, password } = req.body;
 
     // Manual validation
+    // TODO: remove this check because we already have it in the validation schema
     if (!name || !email || !password) {
       return next(new CustomError("All fields are required", 400));
     }
@@ -77,12 +82,14 @@ router.post(
     const { error } = loginUserSchema.validate(req.body, {
       allowUnknown: false,
     });
+
     if (error) {
       return next(new CustomError(error.details[0].message, 400));
     }
 
     const { email, password } = req.body;
 
+    // TODO: remove this check because we already have it in the validation schema
     if (!email || !password) {
       return next(new CustomError("Validation Error", 400));
     }
@@ -143,11 +150,11 @@ router.delete(
     const id = req.params.id;
     const userDeleted = await User.destroy({ where: { id: id } });
 
-    if (!userDeleted) {
+    if (userDeleted === 0) {
       return next(new CustomError("User not found", 404));
     }
 
-    res.status(200).json({ code: 200, message: "User deleted successfully" });
+    res.status(204).json({ code: 204, data: null });
   })
 );
 
@@ -158,16 +165,17 @@ router.put(
     const { error } = updateUserSchema.validate(req.body, {
       allowUnknown: false,
     });
+
     if (error) return next(new CustomError(error.details[0].message, 400));
 
     const id = req.params.id;
 
-    const [rawsUpdated] = await User.update(
+    const [rowsUpdated] = await User.update(
       { ...req.body },
       { where: { id: id } }
     );
 
-    if (!rawsUpdated) {
+    if (rowsUpdated === 0) {
       return next(new CustomError("User not found or no changes made", 404));
     }
 

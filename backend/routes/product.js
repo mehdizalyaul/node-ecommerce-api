@@ -29,6 +29,7 @@ router.post(
     const { error } = createProductSchema.validate(req.body, {
       allowUnknown: false,
     });
+
     if (error) {
       return next(new CustomError(error.details[0].message, 400));
     }
@@ -51,7 +52,7 @@ router.post(
       images,
     });
 
-    res.status(201).json({ code: 201, data: { product } });
+    res.status(201).json({ code: 201, data: product });
   })
 );
 
@@ -61,11 +62,13 @@ router.get(
   asyncErrorHandler(async (req, res) => {
     const products = await Product.findAll();
 
-    if (!products || products.length === 0) {
-      return next(new CustomError("Products not found", 404));
-    }
+    // TODO: When there are no products, the response should be { code: 200, data: [] }
+    // if (!products || products.length === 0) {
+    //  return next(new CustomError("Products not found", 404));
+    // }
 
-    res.status(200).json({ code: 200, data: { products } });
+    // TODO: the expected response should be { code: 200, data: products };
+    res.status(200).json({ code: 200, data: products });
   })
 );
 
@@ -77,10 +80,10 @@ router.get(
     const product = await Product.findOne({ where: { id: id } });
 
     if (!product) {
-      return next(new CustomError("Products not found", 404));
+      return next(new CustomError("Product not found", 404));
     }
 
-    res.status(200).json({ code: 200, data: { product } });
+    res.status(200).json({ code: 200, data: product });
   })
 );
 
@@ -91,13 +94,12 @@ router.delete(
     const id = req.params.id;
     const rowsDeleted = await Product.destroy({ where: { id: id } });
 
-    if (!rowsDeleted) {
+    if (rowsDeleted === 0) {
       return next(new CustomError("Products not found", 404));
     }
 
-    res
-      .status(200)
-      .json({ code: 200, message: "Product deleted successfully" });
+    // TODO: the expected response should be { code: 204, data: null } because the product was deleted successfully
+    res.status(204).json({ code: 204, data: null });
   })
 );
 
@@ -108,22 +110,28 @@ router.put(
     const { error } = updateProductSchema.validate(req.body, {
       allowUnknown: false,
     });
+
     if (error) {
       return next(new CustomError(error.details[0].message, 400));
     }
+
     const id = req.params.id;
+
+    // TODO: Handle the images field in the request body case
+
+    // TODO: Can we use the second return value of the update method to get the updated product?
     const [rowsUpdated] = await Product.update(
-      { ...req.body },
+        req.body,
       { where: { id: id } }
     );
 
-    if (!rowsUpdated) {
+    if (rowsUpdated === 0) {
       return next(new CustomError("Product not found or no changes made", 404));
     }
 
     const updatedProduct = await Product.findOne({ where: { id: id } });
 
-    res.status(200).json({ code: 200, data: { product: updatedProduct } });
+    res.status(200).json({ code: 200, data: updatedProduct });
   })
 );
 

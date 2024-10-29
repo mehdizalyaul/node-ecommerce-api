@@ -4,7 +4,9 @@ function globalErrorHandler(error, req, res, next) {
 
     res.status(error.statusCode).json({
         code: error.statusCode,
-        message: error.message,
+        error: {
+            message: error.message,
+        }
     });
 }
 

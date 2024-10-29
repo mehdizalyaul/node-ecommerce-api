@@ -16,12 +16,15 @@ router.post(
     const { error } = createOrderSchema.validate(req.body, {
       allowUnknown: false,
     });
+
     if (error) {
       return next(new CustomError(error.details[0].message, 400));
     }
+
     const userId = req.userId;
     const { address, paymentMethod } = req.body;
 
+    // TODO: remove this check because we already have it in the validation schema
     if (!address || !paymentMethod) {
       return next(
         new CustomError("Address and payment method are required", 400)
@@ -64,10 +67,6 @@ router.get(
     const userId = req.userId;
 
     const orders = await Order.findAll({ where: { userId: userId } });
-
-    if (orders.length <= 0) {
-      return next(new CustomError("No orders found for this user.", 404));
-    }
 
     res.status(200).json({ code: 200, data: orders });
   })

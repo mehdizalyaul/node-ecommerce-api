@@ -27,6 +27,8 @@ Order.init(
         notEmpty: true,
       },
     },
+    // TODO: let's make it enum for the payment method, "Cash on Delivery" or "Credit Card"
+    // TODO: let's add a new field called paymentDetails to store the payment details like the credit card number
     paymentMethod: {
       type: DataTypes.STRING,
       allowNull: false,

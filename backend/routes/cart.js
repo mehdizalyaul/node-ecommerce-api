@@ -19,6 +19,7 @@ router.post(
     const { error } = createCartSchema.validate(req.body, {
       allowUnknown: false,
     });
+
     if (error) {
       return next(new CustomError(error.details[0].message, 400));
     }
@@ -32,19 +33,21 @@ router.post(
       return next(new CustomError("No product has this ID.", 400));
     }
 
-    if (quantity <= 0) {
-      return next(new CustomError("Quantity must be at least 1.", 400));
-    }
+    // TODO: REMOVE THIS BECAUSE WE ALREADY HAVE THIS CHECK IN THE VALIDATION SCHEMA
+    // if (quantity <= 0) {
+    //  return next(new CustomError("Quantity must be at least 1.", 400));
+    //}
 
     const cartItem = await CartItem.create({
       userId,
       productId,
       quantity,
       description,
+      // TODO: remove the price from cart item
       price: product.price * quantity,
     });
 
-    res.status(201).json({ code: 201, data: { cartItem } });
+    res.status(201).json({ code: 201, data: cartItem });
   })
 );
 
@@ -57,13 +60,11 @@ router.get(
 
     const cartItems = await CartItem.findAll({ where: { userId: userId } });
 
-    if (cartItems.length <= 0) {
-      return next(new CustomError("cart items not found.", 404));
-    }
-
     res.status(200).json({ code: 200, data: cartItems });
   })
 );
+
+// TODO: create router.get("/:itemId") to get a single cart item by ID
 
 // Update a cart item
 router.put(
@@ -73,6 +74,7 @@ router.put(
     const { error } = updateCartSchema.validate(req.body, {
       allowUnknown: false,
     });
+
     if (error) {
       return next(new CustomError(error.details[0].message, 400));
     }
@@ -116,7 +118,7 @@ router.delete(
       return next(new CustomError("No item found to delete", 404));
     }
 
-    res.status(200).json({ code: 200, message: "Item deleted successfully" });
+    res.status(204).json({ code: 204, data: null });
   })
 );
 
