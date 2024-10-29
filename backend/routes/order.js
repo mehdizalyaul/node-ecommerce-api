@@ -5,25 +5,27 @@ const OrderItem = require("../models/OrderItem.js");
 const Order = require("../models/Order.js");
 const isAuthenticated = require("../middlewares/authMiddleware.js");
 const { createOrderSchema } = require("../validation/orderValidation.js");
+const asyncErrorHandler = require("../utils/asyncErrorHandler.js");
+const CustomError = require("../utils/CustomError");
 
 // Create an order
-router.post("/orders", isAuthenticated, async (req, res) => {
-  const { error } = createOrderSchema.validate(req.body, {
-    allowUnknown: false,
-  });
-  if (error)
-    return res
-      .status(400)
-      .json({ code: 400, message: error.details[0].message });
-  try {
+router.post(
+  "/orders",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
+    const { error } = createOrderSchema.validate(req.body, {
+      allowUnknown: false,
+    });
+    if (error) {
+      return next(new CustomError(error.details[0].message, 400));
+    }
     const userId = req.userId;
     const { address, paymentMethod } = req.body;
 
     if (!address || !paymentMethod) {
-      return res.status(400).json({
-        code: 400,
-        message: "Address and payment method are required",
-      });
+      return next(
+        new CustomError("Address and payment method are required", 400)
+      );
     }
 
     let totalAmount = 0;
@@ -51,33 +53,31 @@ router.post("/orders", isAuthenticated, async (req, res) => {
     await order.update({ totalAmount });
 
     res.status(201).json({ code: 201, data: order });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  })
+);
 
 // Get all user orders
-router.get("/orders", isAuthenticated, async (req, res) => {
-  try {
+router.get(
+  "/orders",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
     const userId = req.userId;
 
     const orders = await Order.findAll({ where: { userId: userId } });
 
     if (orders.length <= 0) {
-      return res
-        .status(404)
-        .json({ code: 404, message: "No orders found for this user." });
+      return next(new CustomError("No orders found for this user.", 404));
     }
 
     res.status(200).json({ code: 200, data: orders });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  })
+);
 
 // Get an order's details
-router.get("/orders/:id", isAuthenticated, async (req, res) => {
-  try {
+router.get(
+  "/orders/:id",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
     const orderId = req.params.id;
 
     const order = await Order.findOne({
@@ -86,13 +86,11 @@ router.get("/orders/:id", isAuthenticated, async (req, res) => {
     });
 
     if (!order) {
-      return res.status(404).json({ code: 404, message: "No orders found." });
+      return next(new CustomError("No orders found.", 404));
     }
 
     res.status(200).json({ code: 200, data: order });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  })
+);
 
 module.exports = router;

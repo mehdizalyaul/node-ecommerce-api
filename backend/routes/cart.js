@@ -8,33 +8,32 @@ const {
   createCartSchema,
   updateCartSchema,
 } = require("../validation/cartValidation.js");
+const asyncErrorHandler = require("../utils/asyncErrorHandler.js");
+const CustomError = require("../utils/CustomError");
 
 //Add item to cart
-router.post("/cart", isAuthenticated, async (req, res) => {
-  const { error } = createCartSchema.validate(req.body, {
-    allowUnknown: false,
-  });
-  if (error)
-    return res
-      .status(400)
-      .json({ code: 400, message: error.details[0].message });
+router.post(
+  "/cart",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
+    const { error } = createCartSchema.validate(req.body, {
+      allowUnknown: false,
+    });
+    if (error) {
+      return next(new CustomError(error.details[0].message, 400));
+    }
 
-  try {
     const userId = req.userId;
     const { productId, quantity, description } = req.body;
 
     const product = await Product.findOne({ where: { id: productId } });
 
     if (!productId) {
-      return res
-        .status(400)
-        .json({ code: 400, error: { message: "Product is required." } });
+      return next(new CustomError("No product has this ID.", 400));
     }
+
     if (quantity <= 0) {
-      return res.status(400).json({
-        code: 400,
-        error: { message: "Quantity must be at least 1." },
-      });
+      return next(new CustomError("Quantity must be at least 1.", 400));
     }
 
     const cartItem = await CartItem.create({
@@ -46,41 +45,38 @@ router.post("/cart", isAuthenticated, async (req, res) => {
     });
 
     res.status(201).json({ code: 201, data: { cartItem } });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  })
+);
 
 // Get cart items of a user
-router.get("/cart", isAuthenticated, async (req, res) => {
-  try {
+router.get(
+  "/cart",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
     const userId = req.userId;
 
     const cartItems = await CartItem.findAll({ where: { userId: userId } });
 
     if (cartItems.length <= 0) {
-      return res
-        .status(404)
-        .json({ code: 404, message: "cart items not found." });
+      return next(new CustomError("cart items not found.", 404));
     }
 
     res.status(200).json({ code: 200, data: cartItems });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  })
+);
 
 // Update a cart item
-router.put("/cart/:itemId", isAuthenticated, async (req, res) => {
-  const { error } = updateCartSchema.validate(req.body, {
-    allowUnknown: false,
-  });
-  if (error)
-    return res
-      .status(400)
-      .json({ code: 400, message: error.details[0].message });
+router.put(
+  "/cart/:itemId",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
+    const { error } = updateCartSchema.validate(req.body, {
+      allowUnknown: false,
+    });
+    if (error) {
+      return next(new CustomError(error.details[0].message, 400));
+    }
 
-  try {
     const itemId = req.params.itemId;
     const userId = req.userId;
     const { productId, quantity, description } = req.body;
@@ -91,10 +87,9 @@ router.put("/cart/:itemId", isAuthenticated, async (req, res) => {
     );
 
     if (rowsUpdated === 0) {
-      return res.status(404).json({
-        code: 404,
-        error: { message: "Cart item not found or no changes made." },
-      });
+      return next(
+        new CustomError("Cart item not found or no changes made.", 404)
+      );
     }
 
     const updatedCart = await CartItem.findOne({
@@ -102,14 +97,14 @@ router.put("/cart/:itemId", isAuthenticated, async (req, res) => {
     });
 
     res.status(200).json({ code: 200, data: updatedCart });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  })
+);
 
 // Delete a cart item
-router.delete("/cart/:itemId", isAuthenticated, async (req, res) => {
-  try {
+router.delete(
+  "/cart/:itemId",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
     const itemId = req.params.itemId;
     const userId = req.userId;
 
@@ -118,16 +113,11 @@ router.delete("/cart/:itemId", isAuthenticated, async (req, res) => {
     });
 
     if (deletedItems === 0) {
-      return res.status(404).json({
-        code: 404,
-        error: { message: "No item found to delete" },
-      });
+      return next(new CustomError("No item found to delete", 404));
     }
 
     res.status(200).json({ code: 200, message: "Item deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  })
+);
 
 module.exports = router;
