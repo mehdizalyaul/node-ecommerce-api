@@ -23,7 +23,7 @@ const upload = multer({ storage });
 
 // Create new product
 router.post(
-  "/products",
+  "/",
   upload.array("images", 7),
   asyncErrorHandler(async (req, res) => {
     const { error } = createProductSchema.validate(req.body, {
@@ -57,7 +57,7 @@ router.post(
 
 // Get all products
 router.get(
-  "/products",
+  "/",
   asyncErrorHandler(async (req, res) => {
     const products = await Product.findAll();
 
@@ -71,7 +71,7 @@ router.get(
 
 // Get a single product by ID
 router.get(
-  "/products/:id",
+  "/:id",
   asyncErrorHandler(async (req, res) => {
     const id = req.params.id;
     const product = await Product.findOne({ where: { id: id } });
@@ -86,7 +86,7 @@ router.get(
 
 // Delete a product by ID
 router.delete(
-  "/products/:id",
+  "/:id",
   asyncErrorHandler(async (req, res) => {
     const id = req.params.id;
     const rowsDeleted = await Product.destroy({ where: { id: id } });
@@ -103,7 +103,7 @@ router.delete(
 
 // Update a product by ID
 router.put(
-  "/products/:id",
+  "/:id",
   asyncErrorHandler(async (req, res) => {
     const { error } = updateProductSchema.validate(req.body, {
       allowUnknown: false,

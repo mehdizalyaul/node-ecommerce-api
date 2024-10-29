@@ -10,7 +10,7 @@ const CustomError = require("../utils/CustomError");
 
 // Create an order
 router.post(
-  "/orders",
+  "/",
   isAuthenticated,
   asyncErrorHandler(async (req, res) => {
     const { error } = createOrderSchema.validate(req.body, {
@@ -58,7 +58,7 @@ router.post(
 
 // Get all user orders
 router.get(
-  "/orders",
+  "/",
   isAuthenticated,
   asyncErrorHandler(async (req, res) => {
     const userId = req.userId;
@@ -75,7 +75,7 @@ router.get(
 
 // Get an order's details
 router.get(
-  "/orders/:id",
+  "/:id",
   isAuthenticated,
   asyncErrorHandler(async (req, res) => {
     const orderId = req.params.id;

@@ -10,14 +10,11 @@ const {
   CartItem,
 } = require("./models");
 const express = require("express");
-const productRoutes = require("./routes/product.js");
-const userRoutes = require("./routes/user.js");
-const cartItemRoutes = require("./routes/cart.js");
-const orderRoutes = require("./routes/order.js");
+
+const routes = require("./routes");
 
 const CustomError = require("./utils/CustomError.js");
 const globalErrorHandler = require("./utils/globalErrorHandler.js");
-const categoryRoutes = require("./routes/category.js");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,14 +25,7 @@ app.use(express.json());
 // Parse URL-encoded data from forms
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", userRoutes);
-
-app.use("/api", productRoutes);
-
-app.use("/api", cartItemRoutes);
-
-app.use("/api", orderRoutes);
-app.use("/api", categoryRoutes);
+app.use("/api", routes);
 
 app.all("*", (req, res, next) => {
   const err = new CustomError(

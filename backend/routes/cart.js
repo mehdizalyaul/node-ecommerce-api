@@ -13,7 +13,7 @@ const CustomError = require("../utils/CustomError");
 
 //Add item to cart
 router.post(
-  "/cart",
+  "/",
   isAuthenticated,
   asyncErrorHandler(async (req, res) => {
     const { error } = createCartSchema.validate(req.body, {
@@ -50,7 +50,7 @@ router.post(
 
 // Get cart items of a user
 router.get(
-  "/cart",
+  "/",
   isAuthenticated,
   asyncErrorHandler(async (req, res) => {
     const userId = req.userId;
@@ -67,7 +67,7 @@ router.get(
 
 // Update a cart item
 router.put(
-  "/cart/:itemId",
+  "/:itemId",
   isAuthenticated,
   asyncErrorHandler(async (req, res) => {
     const { error } = updateCartSchema.validate(req.body, {
@@ -102,7 +102,7 @@ router.put(
 
 // Delete a cart item
 router.delete(
-  "/cart/:itemId",
+  "/:itemId",
   isAuthenticated,
   asyncErrorHandler(async (req, res) => {
     const itemId = req.params.itemId;
