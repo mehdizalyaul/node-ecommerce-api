@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const sequelize = require("./config/database.js");
 const {
   User,
@@ -12,7 +14,7 @@ const productRoutes = require("./routes/product.js");
 const userRoutes = require("./routes/user.js");
 const cartItemRoutes = require("./routes/cart.js");
 const orderRoutes = require("./routes/order.js");
-require("dotenv").config();
+
 const CustomError = require("./utils/CustomError.js");
 const globalErrorHandler = require("./utils/globalErrorHandler.js");
 const categoryRoutes = require("./routes/category.js");
