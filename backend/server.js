@@ -13,11 +13,8 @@ const express = require("express");
 
 const routes = require("./routes");
 
-const CustomError = require("./utils/CustomError.js");
-const globalErrorHandler = require("./utils/globalErrorHandler.js");
-
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 // Parse incoming JSON data
 app.use(express.json());
@@ -25,17 +22,7 @@ app.use(express.json());
 // Parse URL-encoded data from forms
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", routes);
-
-app.all("*", (req, res, next) => {
-  const err = new CustomError(
-    `Can't find ${req.originalUrl} on the server!`,
-    404
-  );
-  next(err);
-});
-
-app.use(globalErrorHandler);
+app.use("/", routes);
 
 sequelize
   .sync({ alter: true })
@@ -49,17 +36,3 @@ sequelize
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);
 });
-
-function wraper(controller) {
-  return async function (req, res, next) {
-    try {
-      controller(req, res);
-    } catch (error) {
-      const err = new CustomError(
-        `Can't find ${req.originalUrl} on the server!`,
-        404
-      );
-      next(err);
-    }
-  };
-}
