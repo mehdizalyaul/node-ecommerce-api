@@ -13,6 +13,9 @@ const userRoutes = require("./routes/user.js");
 const cartItemRoutes = require("./routes/cart.js");
 const orderRoutes = require("./routes/order.js");
 require("dotenv").config();
+const CustomError = require("./utils/CustomError.js");
+const globalErrorHandler = require("./utils/globalErrorHandler.js");
+const categoryRoutes = require("./routes/category.js");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -30,15 +33,17 @@ app.use("/api", productRoutes);
 app.use("/api", cartItemRoutes);
 
 app.use("/api", orderRoutes);
+app.use("/api", categoryRoutes);
 
-app.all("*", (req, res) => {
-  res
-    .status(404)
-    .json({
-      code: 404,
-      message: `Can't find ${req.originalUrl} on the server!`,
-    });
+app.all("*", (req, res, next) => {
+  const err = new CustomError(
+    `Can't find ${req.originalUrl} on the server!`,
+    404
+  );
+  next(err);
 });
+
+app.use(globalErrorHandler);
 
 sequelize
   .sync({ alter: true })
@@ -52,3 +57,17 @@ sequelize
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);
 });
+
+function wraper(controller) {
+  return async function (req, res, next) {
+    try {
+      controller(req, res);
+    } catch (error) {
+      const err = new CustomError(
+        `Can't find ${req.originalUrl} on the server!`,
+        404
+      );
+      next(err);
+    }
+  };
+}
