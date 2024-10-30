@@ -12,7 +12,6 @@ const {
 } = require("../validation/userValidation.js");
 const asyncErrorHandler = require("../utils/asyncErrorHandler.js");
 const generateTokens = require("../utils/generateTokens.js");
-
 // create a user
 router.post(
   "/register",
@@ -63,11 +62,10 @@ router.post(
     if (!isMatch) {
       return next(new CustomError("Invalid credentials", 401));
     }
-
     const { accessToken, refreshToken, expiryDate } = await generateTokens(
       user.id
     );
-
+    console.log(accessToken);
     res
       .status(200)
       .json({ code: 200, data: { accessToken, refreshToken, expiryDate } });

@@ -43,7 +43,7 @@ Order.init(
       field: "total_amount",
       validate: {
         isFloat: true,
-        min: 0.01,
+        min: 0,
       },
     },
     status: {

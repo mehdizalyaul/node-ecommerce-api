@@ -122,7 +122,7 @@ router.put(
       { ...req.body, images },
       { where: { id: id } }
     );
-
+    console.log(rowsUpdated);
     if (rowsUpdated === 0) {
       return next(new CustomError("Product not found or no changes made", 404));
     }

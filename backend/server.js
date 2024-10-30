@@ -9,27 +9,39 @@ const {
   CartItem,
 } = require("./models");
 const express = require("express");
-
 const routes = require("./routes");
-const RefreshToken = require("./models/RefreshToken.js");
-
 const app = express();
+
+const logger = require("./utils/logger.js");
+const morgan = require("morgan");
+
 const port = process.env.PORT;
 
-console.log(
-  process.env.DATABASE_NAME,
-  process.env.DATABASE_USER,
-  process.env.DATABASE_PASSWORD,
-  process.env.DATABASE_HOST
-);
 // Parse incoming JSON data
 app.use(express.json());
 
 // Parse URL-encoded data from forms
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/", routes);
+const morganFormat = ":method :url :status :response-time ms";
 
+app.use(
+  morgan(morganFormat, {
+    stream: {
+      write: (message) => {
+        const logObject = {
+          method: message.split(" ")[0],
+          url: message.split(" ")[1],
+          status: message.split(" ")[2],
+          responseTime: message.split(" ")[3],
+        };
+        logger.info(JSON.stringify(logObject));
+      },
+    },
+  })
+);
+
+app.use("/", routes);
 sequelize
   .sync({ alter: true })
   .then(() => {

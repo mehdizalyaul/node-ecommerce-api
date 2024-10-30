@@ -50,12 +50,13 @@ router.post(
       }
 
       totalAmount += product.price * item.quantity;
+      let priceFormated = (product.price * item.quantity).toFixed(2);
 
       await OrderItem.create({
         orderId: order.id,
         productId: item.productId,
         quantity: item.quantity,
-        price: product.price * item.quantity,
+        price: priceFormated,
       });
     }
 
@@ -95,6 +96,25 @@ router.get(
     }
 
     res.status(200).json({ code: 200, data: order });
+  })
+);
+
+// Delete an order's details
+router.delete(
+  "/:id",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
+    const orderId = req.params.id;
+
+    const deletedRaws = await Order.destroy({
+      where: { id: orderId },
+    });
+
+    if (deletedRaws === 0) {
+      return next(new CustomError("No order found with this ID.", 404));
+    }
+
+    res.status(204).json({ code: 204, data: null });
   })
 );
 
