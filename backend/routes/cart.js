@@ -10,12 +10,13 @@ const {
 } = require("../validation/cartValidation.js");
 const asyncErrorHandler = require("../utils/asyncErrorHandler.js");
 const CustomError = require("../utils/CustomError");
+// TODO: create a getter method to calculate the total price of the cart item by multiplying the product price with the quantity
 
-//Add item to cart
+// Add item to cart
 router.post(
   "/",
   isAuthenticated,
-  asyncErrorHandler(async (req, res) => {
+  asyncErrorHandler(async (req, res, next) => {
     const { error } = createCartSchema.validate(req.body, {
       allowUnknown: false,
     });
@@ -25,21 +26,19 @@ router.post(
     }
 
     const userId = req.userId;
-    const { productId, quantity, description } = req.body;
+    const { productId, quantity } = req.body;
 
+    // Check if the product exists
     const product = await Product.findOne({ where: { id: productId } });
 
-    if (!productId) {
+    if (!product) {
       return next(new CustomError("No product has this ID.", 400));
     }
 
     const cartItem = await CartItem.create({
       userId,
-      productId,
+      productId: product.id,
       quantity,
-      description,
-      // TODO: remove the price from cart item
-      price: product.price * quantity,
     });
 
     res.status(201).json({ code: 201, data: cartItem });
@@ -92,10 +91,10 @@ router.put(
 
     const itemId = req.params.itemId;
     const userId = req.userId;
-    const { productId, quantity, description } = req.body;
+    const { productId, quantity } = req.body;
 
     const [rowsUpdated] = await CartItem.update(
-      { productId, quantity, description },
+      { productId, quantity },
       { where: { userId, id: itemId } }
     );
 
