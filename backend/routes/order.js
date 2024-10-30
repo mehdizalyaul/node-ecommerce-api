@@ -24,13 +24,6 @@ router.post(
     const userId = req.userId;
     const { address, paymentMethod } = req.body;
 
-    // TODO: remove this check because we already have it in the validation schema
-    if (!address || !paymentMethod) {
-      return next(
-        new CustomError("Address and payment method are required", 400)
-      );
-    }
-
     let totalAmount = 0;
 
     const order = await Order.create({
@@ -81,7 +74,7 @@ router.get(
 
     const order = await Order.findOne({
       where: { id: orderId },
-      include: [{ model: OrderItem, as: "items" }],
+      include: [{ model: OrderItem, as: "items" }], // get all orderItems related to this orderId
     });
 
     if (!order) {

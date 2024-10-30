@@ -1,50 +1,17 @@
 const express = require("express");
 const router = express.Router();
+const isAuthenticated = require("../middlewares/authMiddleware.js");
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../models/User.js");
-const jwt = require("jsonwebtoken");
-const RefreshToken = require("../models/RefreshToken.js");
-const isAuthenticated = require("../middlewares/authMiddleware.js");
+const CustomError = require("../utils/CustomError");
 const {
   registerUserSchema,
   loginUserSchema,
   updateUserSchema,
 } = require("../validation/userValidation.js");
 const asyncErrorHandler = require("../utils/asyncErrorHandler.js");
-const CustomError = require("../utils/CustomError");
-
-const accessSecretKey = `${process.env.ACCESS_SECRET_KEY}`;
-const refreshSecretKey = `${process.env.REFRESH_SECRET_KEY}`;
-
-// TODO: move it to a utility file
-async function generateTokens(userId) {
-  // TODO: Update the environment variables key to include the unit of time
-  const accessExpiresIn = `${process.env.ACCESS_EXPIRES_IN}`; // minutes
-  const refreshExpiresIn = `${process.env.REFRESH_EXPIRES_IN}`; // days
-
-  // Generate access token
-  const accessToken = await jwt.sign({ userId }, accessSecretKey, {
-    subject: "accessApi",
-    // TODO: remove the "m" after updating the environment variable
-    expiresIn: `${accessExpiresIn}m`, // access token expires in 5 minutes
-  });
-
-  // Generate refresh token
-  const refreshToken = await jwt.sign({ userId }, refreshSecretKey, {
-    subject: "refreshToken",
-    // TODO: remove the "d" after updating the environment variable
-    expiresIn: `${refreshExpiresIn}d`, // refresh token expires in 7 days
-  });
-
-  // Calculate access token expiry date
-  let expiryDate = new Date();
-  expiryDate.setMinutes(expiryDate.getMinutes() + accessExpiresIn);
-  expiryDate = expiryDate.toISOString();
-
-  // Store the new refresh token in the database
-  await RefreshToken.create({ userId, expiryDate, token: refreshToken });
-  return { accessToken, refreshToken, expiryDate };
-}
+const generateTokens = require("../utils/generateTokens.js");
 
 // create a user
 router.post(
@@ -59,12 +26,6 @@ router.post(
     }
 
     const { name, email, password } = req.body;
-
-    // Manual validation
-    // TODO: remove this check because we already have it in the validation schema
-    if (!name || !email || !password) {
-      return next(new CustomError("All fields are required", 400));
-    }
 
     // User creation
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -88,11 +49,6 @@ router.post(
     }
 
     const { email, password } = req.body;
-
-    // TODO: remove this check because we already have it in the validation schema
-    if (!email || !password) {
-      return next(new CustomError("Validation Error", 400));
-    }
 
     const user = await User.findOne({
       where: { email: email },

@@ -62,12 +62,6 @@ router.get(
   asyncErrorHandler(async (req, res) => {
     const products = await Product.findAll();
 
-    // TODO: When there are no products, the response should be { code: 200, data: [] }
-    // if (!products || products.length === 0) {
-    //  return next(new CustomError("Products not found", 404));
-    // }
-
-    // TODO: the expected response should be { code: 200, data: products };
     res.status(200).json({ code: 200, data: products });
   })
 );
@@ -97,8 +91,6 @@ router.delete(
     if (rowsDeleted === 0) {
       return next(new CustomError("Products not found", 404));
     }
-
-    // TODO: the expected response should be { code: 204, data: null } because the product was deleted successfully
     res.status(204).json({ code: 204, data: null });
   })
 );
@@ -106,6 +98,7 @@ router.delete(
 // Update a product by ID
 router.put(
   "/:id",
+  upload.array("images", 7),
   asyncErrorHandler(async (req, res) => {
     const { error } = updateProductSchema.validate(req.body, {
       allowUnknown: false,
@@ -117,11 +110,16 @@ router.put(
 
     const id = req.params.id;
 
-    // TODO: Handle the images field in the request body case
+    const images = [];
 
-    // TODO: Can we use the second return value of the update method to get the updated product?
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file) => {
+        images.push(file.filename);
+      });
+    }
+
     const [rowsUpdated] = await Product.update(
-        req.body,
+      { ...req.body, images },
       { where: { id: id } }
     );
 

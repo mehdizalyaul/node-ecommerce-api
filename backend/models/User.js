@@ -24,7 +24,6 @@ User.init(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true, // Define only once
       validate: {
         isEmail: true,
       },

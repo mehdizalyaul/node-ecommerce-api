@@ -33,11 +33,6 @@ router.post(
       return next(new CustomError("No product has this ID.", 400));
     }
 
-    // TODO: REMOVE THIS BECAUSE WE ALREADY HAVE THIS CHECK IN THE VALIDATION SCHEMA
-    // if (quantity <= 0) {
-    //  return next(new CustomError("Quantity must be at least 1.", 400));
-    //}
-
     const cartItem = await CartItem.create({
       userId,
       productId,
@@ -64,7 +59,23 @@ router.get(
   })
 );
 
-// TODO: create router.get("/:itemId") to get a single cart item by ID
+// Get a single cart item by ID
+router.get(
+  "/:itemId",
+  isAuthenticated,
+  asyncErrorHandler(async (req, res) => {
+    const itemId = req.params.itemId;
+    const userId = req.userId;
+
+    const cartItem = await CartItem.findOne({ where: { userId, id: itemId } });
+
+    if (!cartItem) {
+      return next(new CustomError("Item not exist in your cart", 404));
+    }
+
+    res.status(200).json({ code: 200, data: cartItem });
+  })
+);
 
 // Update a cart item
 router.put(
