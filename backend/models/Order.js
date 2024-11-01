@@ -22,7 +22,6 @@ Order.init(
     address: {
       type: DataTypes.STRING,
       allowNull: false,
-      field: "product_id",
       validate: {
         notEmpty: true,
       },

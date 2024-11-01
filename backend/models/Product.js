@@ -71,7 +71,7 @@ Product.init(
     images: {
       type: DataTypes.JSON,
       allowNull: true,
-      get() {
+      /*  get() {
         const rawImages = this.getDataValue("images");
         if (!rawImages) return null;
 
@@ -83,7 +83,7 @@ Product.init(
           console.error("Error parsing images:", error);
           return rawImages; // Return raw if parsing fails
         }
-      },
+      },*/
     },
   },
   {

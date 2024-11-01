@@ -45,4 +45,5 @@ module.exports = {
   Order,
   OrderItem,
   CartItem,
+  Category,
 };
