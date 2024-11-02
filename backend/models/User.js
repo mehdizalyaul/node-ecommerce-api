@@ -52,6 +52,16 @@ User.init(
         notEmpty: true,
       },
     },
+    resetToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "reset_token",
+    },
+    resetTokenExpire: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "reset_token_expire",
+    },
   },
   {
     sequelize,
