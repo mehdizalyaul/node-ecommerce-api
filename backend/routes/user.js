@@ -3,6 +3,8 @@ const router = express.Router();
 const isAuthenticated = require("../middlewares/authMiddleware.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const User = require("../models/User.js");
 const CustomError = require("../utils/CustomError");
 const {
@@ -191,5 +193,39 @@ router.get(
     res.status(200).json({ code: 200, data: user });
   })
 );
+
+router.post("/forgetpassword", async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    return res.status(404).json({ error: "Email not found" });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = await bcrypt.hash(resetToken, 10);
+  user.resetToken = tokenHash;
+  user.resetTokenExpire = Date.now() + 3600000; // 1 hour
+  await user.save();
+
+  var transporter = nodemailer.createTransport({
+    host: "sandbox.smtp.mailtrap.io",
+    port: 2525,
+    auth: {
+      user: "bbb4bb88bdbb07",
+      pass: "2fc5813f01e03b",
+    },
+  });
+
+  const resetUrl = `http://localhost:${process.env.PORT}/resetPassword/${resetToken}`;
+
+  await transporter.sendMail({
+    to: email,
+    subject: "Password Reset",
+    html: `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`,
+  });
+
+  res.send("Password reset email sent");
+});
 
 module.exports = router;
