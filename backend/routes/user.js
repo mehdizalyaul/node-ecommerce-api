@@ -63,22 +63,18 @@ router.post(
   })
 );
 
+//Verification Email
 router.get(
   "/verify-email",
   asyncErrorHandler(async (req, res, next) => {
     const { token, email } = req.query;
-    logger.info(email);
+
     const user = await User.findOne({
       where: {
         email: email,
         verifyEmailTokenExpire: { [Sequelize.Op.gt]: Date.now() },
       },
     });
-    logger.info("Current Date:", Date.now());
-    logger.info(
-      "User verifyEmailTokenExpire check:",
-      user && user.verifyEmailTokenExpire
-    );
 
     // Check if user exists and token hasn't expired
     if (!user) {
@@ -98,6 +94,62 @@ router.get(
     await user.save();
 
     res.status(200).json({ message: "Email verified successfully." });
+  })
+);
+
+//Resend verification Email
+router.get(
+  "/resend-verify-email",
+  asyncErrorHandler(async (req, res, next) => {
+    const { email } = req.query;
+
+    // Find user who is not yet verified and matches the provided email
+    const user = await User.findOne({
+      where: {
+        email: email,
+        isEmailVerified: false,
+      },
+    });
+
+    if (!user) {
+      return next(
+        new CustomError("User is already verified or does not exist.", 400)
+      );
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: "sandbox.smtp.mailtrap.io",
+      port: 2525,
+      auth: {
+        user: "bbb4bb88bdbb07",
+        pass: "2fc5813f01e03b",
+      },
+    });
+
+    // Generate and hash a new verification token
+    const verifyEmailToken = crypto.randomBytes(32).toString("hex");
+    const verifyEmailTokenHashed = await bcrypt.hash(verifyEmailToken, 10);
+    const verifyEmailTokenExpire = Date.now() + 3600000; // 1 hour expiration
+
+    // Update user with the new token and expiration
+    user.verifyEmailToken = verifyEmailTokenHashed;
+    user.verifyEmailTokenExpire = verifyEmailTokenExpire;
+    await user.save();
+
+    // Create the verification URL
+    const verificationUrl = `http://localhost:${process.env.PORT}/api/verify-email?token=${verifyEmailToken}&email=${email}`;
+
+    // Send the email
+    await transporter.sendMail({
+      to: email,
+      subject: "Email Verification",
+      html: `<p>Welcome ${user.name}, please verify your email by clicking <a href="${verificationUrl}">here</a>.</p>`,
+    });
+
+    // Respond with success
+    res
+      .status(200)
+      .json({ message: "Verification email resent successfully." });
   })
 );
 
