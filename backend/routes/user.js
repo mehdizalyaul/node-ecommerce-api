@@ -14,6 +14,8 @@ const {
 } = require("../validation/userValidation.js");
 const asyncErrorHandler = require("../utils/asyncErrorHandler.js");
 const generateTokens = require("../utils/generateTokens.js");
+const Sequelize = require("sequelize");
+const logger = require("../utils/logger.js");
 // create a user
 router.post(
   "/register",
@@ -194,38 +196,79 @@ router.get(
   })
 );
 
-router.post("/forgetpassword", async (req, res) => {
-  const { email } = req.body;
+router.post(
+  "/forgetpassword",
+  asyncErrorHandler(async (req, res) => {
+    const { email } = req.body;
 
-  const user = await User.findOne({ where: { email } });
-  if (!user) {
-    return res.status(404).json({ error: "Email not found" });
-  }
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return next(new CustomError("Email not found", 404));
+    }
 
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  const tokenHash = await bcrypt.hash(resetToken, 10);
-  user.resetToken = tokenHash;
-  user.resetTokenExpire = Date.now() + 3600000; // 1 hour
-  await user.save();
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = await bcrypt.hash(resetToken, 10);
+    user.resetToken = tokenHash;
+    user.resetTokenExpire = Date.now() + 3600000; // 1 hour
+    await user.save();
 
-  var transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
-    port: 2525,
-    auth: {
-      user: "bbb4bb88bdbb07",
-      pass: "2fc5813f01e03b",
+    var transporter = nodemailer.createTransport({
+      host: "sandbox.smtp.mailtrap.io",
+      port: 2525,
+      auth: {
+        user: "bbb4bb88bdbb07",
+        pass: "2fc5813f01e03b",
+      },
+    });
+
+    const resetUrl = `http://localhost:${process.env.PORT}/api/reset-password/${resetToken}`;
+
+    await transporter.sendMail({
+      to: email,
+      subject: "Password Reset",
+      html: `<p>
+          Click <a href="${resetUrl}">here</a> to reset your password.
+        </p>`,
+    });
+
+    res.status(200).json({ code: 200, message: "Password reset email sent" });
+  })
+);
+
+router.post("/reset-password/:token", async (req, res, next) => {
+  const token = req.params.token;
+  const { newPassword, userId } = req.body;
+
+  // Find the user with the token that hasn’t expired
+  const user = await User.findOne({
+    where: {
+      id: userId,
+      resetTokenExpire: { [Sequelize.Op.gt]: Date.now() },
     },
   });
 
-  const resetUrl = `http://localhost:${process.env.PORT}/resetPassword/${resetToken}`;
+  if (!user) {
+    return next(new CustomError("Invalid or expired token.", 400));
+  }
 
-  await transporter.sendMail({
-    to: email,
-    subject: "Password Reset",
-    html: `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`,
-  });
+  // Compare the plain token with the hashed token in the database
+  const isMatch = await bcrypt.compare(token, user.resetToken);
+  if (!isMatch) {
+    return next(new CustomError("Invalid token.", 400));
+  }
 
-  res.send("Password reset email sent");
+  // Hash the new password and update it
+  const newPasswordHashed = await bcrypt.hash(newPassword, 10);
+  user.password = newPasswordHashed;
+
+  // Clear the reset token and expiration
+  user.resetToken = null;
+  user.resetTokenExpire = null;
+  await user.save();
+
+  res
+    .status(200)
+    .json({ code: 200, message: "Password has been reset successfully." });
 });
 
 module.exports = router;
