@@ -63,6 +63,16 @@ User.init(
       allowNull: true,
       field: "reset_token_expire",
     },
+    verifyEmailToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "verify_email_token",
+    },
+    verifyEmailTokenExpire: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "verify_email_token_expire",
+    },
   },
   {
     sequelize,
