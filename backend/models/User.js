@@ -42,6 +42,7 @@ User.init(
     isEmailVerified: {
       type: DataTypes.BOOLEAN,
       field: "is_email_verified",
+      defaultValue: false,
       validate: {
         notEmpty: true,
       },

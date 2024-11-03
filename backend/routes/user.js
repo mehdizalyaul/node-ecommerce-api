@@ -196,6 +196,7 @@ router.get(
   })
 );
 
+//Forget Password
 router.post(
   "/forgetpassword",
   asyncErrorHandler(async (req, res) => {
@@ -235,6 +236,7 @@ router.post(
   })
 );
 
+// Reset Password
 router.post("/reset-password/:token", async (req, res, next) => {
   const token = req.params.token;
   const { newPassword, userId } = req.body;
