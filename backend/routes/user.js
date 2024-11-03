@@ -34,8 +34,70 @@ router.post(
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
 
+    const transporter = nodemailer.createTransport({
+      host: "sandbox.smtp.mailtrap.io",
+      port: 2525,
+      auth: {
+        user: "bbb4bb88bdbb07",
+        pass: "2fc5813f01e03b",
+      },
+    });
+
+    const verifyEmailToken = crypto.randomBytes(32).toString("hex");
+    const verifyEmailTokenHashed = await bcrypt.hash(verifyEmailToken, 10);
+    const verifyEmailTokenExpire = Date.now() + 3600000;
+
+    user.verifyEmailToken = verifyEmailTokenHashed;
+    user.verifyEmailTokenExpire = verifyEmailTokenExpire;
+    await user.save();
+    const verificationUrl = `http://localhost:${process.env.PORT}/api/verify-email?token=${verifyEmailToken}&email=${email}`;
+
+    await transporter.sendMail({
+      to: email,
+      subject: "Email verification",
+      html: `<p>Welcome ${name} Click <a href="${verificationUrl}">here</a> to verify your email.</p>`,
+    });
+
     // Success response
-    res.status(201).json({ code: 201, data: user });
+    res.status(201).json({ code: 201, message: "Email verification sent" });
+  })
+);
+
+router.get(
+  "/verify-email",
+  asyncErrorHandler(async (req, res, next) => {
+    const { token, email } = req.query;
+    logger.info(email);
+    const user = await User.findOne({
+      where: {
+        email: email,
+        verifyEmailTokenExpire: { [Sequelize.Op.gt]: Date.now() },
+      },
+    });
+    logger.info("Current Date:", Date.now());
+    logger.info(
+      "User verifyEmailTokenExpire check:",
+      user && user.verifyEmailTokenExpire
+    );
+
+    // Check if user exists and token hasn't expired
+    if (!user) {
+      return next(new CustomError("Invalid or expired token.", 400));
+    }
+
+    // Compare the provided token with the stored hashed token
+    const isTokenValid = await bcrypt.compare(token, user.verifyEmailToken);
+
+    if (!isTokenValid) {
+      return next(new CustomError("Invalid token.", 400));
+    }
+
+    user.isEmailVerified = true;
+    user.verifyEmailToken = null; // Clear the token
+    user.verifyEmailTokenExpire = null; // Clear expiration
+    await user.save();
+
+    res.status(200).json({ message: "Email verified successfully." });
   })
 );
 
@@ -213,7 +275,7 @@ router.post(
     user.resetTokenExpire = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    var transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
       host: "sandbox.smtp.mailtrap.io",
       port: 2525,
       auth: {
