@@ -15,7 +15,8 @@ const {
 const asyncErrorHandler = require("../utils/asyncErrorHandler.js");
 const generateTokens = require("../utils/generateTokens.js");
 const Sequelize = require("sequelize");
-const logger = require("../utils/logger.js");
+const sendEmail = require("../utils/sendEmail.js");
+
 // create a user
 router.post(
   "/register",
@@ -34,29 +35,7 @@ router.post(
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
 
-    const transporter = nodemailer.createTransport({
-      host: "sandbox.smtp.mailtrap.io",
-      port: 2525,
-      auth: {
-        user: "bbb4bb88bdbb07",
-        pass: "2fc5813f01e03b",
-      },
-    });
-
-    const verifyEmailToken = crypto.randomBytes(32).toString("hex");
-    const verifyEmailTokenHashed = await bcrypt.hash(verifyEmailToken, 10);
-    const verifyEmailTokenExpire = Date.now() + 3600000;
-
-    user.verifyEmailToken = verifyEmailTokenHashed;
-    user.verifyEmailTokenExpire = verifyEmailTokenExpire;
-    await user.save();
-    const verificationUrl = `http://localhost:${process.env.PORT}/api/verify-email?token=${verifyEmailToken}&email=${email}`;
-
-    await transporter.sendMail({
-      to: email,
-      subject: "Email verification",
-      html: `<p>Welcome ${name} Click <a href="${verificationUrl}">here</a> to verify your email.</p>`,
-    });
+    await sendEmail(user, "User email verification");
 
     // Success response
     res.status(201).json({ code: 201, message: "Email verification sent" });
@@ -117,34 +96,7 @@ router.get(
       );
     }
 
-    const transporter = nodemailer.createTransport({
-      host: "sandbox.smtp.mailtrap.io",
-      port: 2525,
-      auth: {
-        user: "bbb4bb88bdbb07",
-        pass: "2fc5813f01e03b",
-      },
-    });
-
-    // Generate and hash a new verification token
-    const verifyEmailToken = crypto.randomBytes(32).toString("hex");
-    const verifyEmailTokenHashed = await bcrypt.hash(verifyEmailToken, 10);
-    const verifyEmailTokenExpire = Date.now() + 3600000; // 1 hour expiration
-
-    // Update user with the new token and expiration
-    user.verifyEmailToken = verifyEmailTokenHashed;
-    user.verifyEmailTokenExpire = verifyEmailTokenExpire;
-    await user.save();
-
-    // Create the verification URL
-    const verificationUrl = `http://localhost:${process.env.PORT}/api/verify-email?token=${verifyEmailToken}&email=${email}`;
-
-    // Send the email
-    await transporter.sendMail({
-      to: email,
-      subject: "Email Verification",
-      html: `<p>Welcome ${user.name}, please verify your email by clicking <a href="${verificationUrl}">here</a>.</p>`,
-    });
+    await sendEmail(user, "User email verification");
 
     // Respond with success
     res
