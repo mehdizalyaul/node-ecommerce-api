@@ -3,8 +3,6 @@ const router = express.Router();
 const isAuthenticated = require("../middlewares/authMiddleware.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 const User = require("../models/User.js");
 const CustomError = require("../utils/CustomError");
 const {
@@ -15,7 +13,10 @@ const {
 const asyncErrorHandler = require("../utils/asyncErrorHandler.js");
 const generateTokens = require("../utils/generateAuthTokens.js");
 const Sequelize = require("sequelize");
-const sendEmail = require("../utils/emailHandler/sendEmail.js");
+const {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} = require("../utils/emailHandler/emailActions.js");
 
 // create a user
 router.post(
@@ -35,14 +36,13 @@ router.post(
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
 
-    await sendEmail(user, req.route.path);
-
+    await sendVerificationEmail(user);
     // Success response
     res.status(201).json({ code: 201, message: "Email verification sent" });
   })
 );
 
-//Verification Email
+// Email Verification
 router.get(
   "/verify-email",
   asyncErrorHandler(async (req, res, next) => {
@@ -77,7 +77,7 @@ router.get(
 );
 
 //Resend verification Email
-router.get(
+router.post(
   "/resend-verify-email",
   asyncErrorHandler(async (req, res, next) => {
     const { email } = req.query;
@@ -96,7 +96,7 @@ router.get(
       );
     }
 
-    await sendEmail(user, req.route.path);
+    await sendVerificationEmail(user);
 
     // Respond with success
     res
@@ -273,7 +273,7 @@ router.post(
       return next(new CustomError("Email not found", 404));
     }
 
-    await sendEmail(user, req.route.path);
+    await sendPasswordResetEmail(user);
 
     res.status(200).json({ code: 200, message: "Password reset email sent" });
   })

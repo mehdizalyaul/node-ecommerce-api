@@ -8,4 +8,4 @@ async function generateToken() {
   return { token, tokenHash };
 }
 
-module.exports = { generateToken };
+module.exports = generateToken;
