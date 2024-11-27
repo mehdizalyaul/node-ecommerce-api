@@ -33,4 +33,7 @@ async function sendPasswordResetEmail(user) {
   await sendEmail(user.email, subject, html);
 }
 
-module.exports = { handleVerifyEmail, handleForgetPasswordEmail };
+module.exports = {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+};
