@@ -5,6 +5,7 @@
   "scripts": {
     "start": "nodemon server.js",
     "test": "vitest",
+    "dev": "concurrently \"npm run start\" \"npm run test\"",
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
     "db:seed": "npx sequelize-cli db:seed:all",
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.1.0",
+    "concurrently": "^9.1.0",
     "vitest": "^2.1.6"
   }
 }
