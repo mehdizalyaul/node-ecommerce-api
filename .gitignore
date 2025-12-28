@@ -1,1 +1,8 @@
+node_modules
+
+.env
+app.log
+
 .idea
+
+uploads/
