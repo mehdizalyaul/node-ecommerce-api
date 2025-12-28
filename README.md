@@ -53,6 +53,10 @@ The API will be available at:
 http://localhost:3000/api
 ```
 
+## API Documentation
+
+[![Postman](https://img.shields.io/badge/Postman-Collection-orange?logo=postman)](https://www.postman.com/descent-module-observer-29219531/apis/collection/37282646-afa67022-1434-47ed-bab3-33246c73f410?action=share&source=copy-link&creator=37282646)
+
 ## Authentication
 
 - Most routes require a valid **access token**
